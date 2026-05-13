@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Administrativo</title>
+    <style>
+        body { font-family: sans-serif; background: #f8f9fa; padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { color: #004a99; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .btn-excel { background: #28a745; color: white; padding: 10px; text-decoration: none; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f1f1f1; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>Gestión de Denuncias</h2>
+    <div class="controls">
+        <form action="/admin" method="GET" style="display:flex; flex-grow:1; gap:10px;">
+            <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar por folio o nombre...">
+            <button type="submit" style="padding:10px; cursor:pointer;">🔍</button>
+        </form>
+        <a href="/descargar_excel" class="btn-excel">📊 Reporte Excel</a>
+    </div>
+    <table>
+        <thead>
+            <tr><th>Folio</th><th>Fecha</th><th>Nombre</th><th>Descripción</th><th>Estatus</th></tr>
+        </thead>
+        <tbody>
+            {% for d in denuncias %}
+            <tr>
+                <td><b>{{ d.folio }}</b></td>
+                <td>{{ d.fecha.strftime('%d/%m/%Y') }}</td>
+                <td>{{ d.nombre_denunciante }}</td>
+                <td>{{ d.descripcion[:80] }}...</td>
+                <td>{{ d.estatus }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
