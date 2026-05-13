@@ -2,45 +2,74 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Administrativo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - Subprocuraduría</title>
     <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 30px; }
-        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2 { color: #004a99; }
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        input { flex-grow: 1; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
-        .btn-excel { background: #28a745; color: white; padding: 10px; text-decoration: none; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f1f1f1; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+        .navbar { background-color: #004481; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .container { padding: 30px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; }
+        h2 { color: #004481; margin-top: 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th { background-color: #f8f9fa; color: #333; text-align: left; padding: 12px; border-bottom: 2px solid #dee2e6; }
+        td { padding: 12px; border-bottom: 1px solid #dee2e6; color: #555; vertical-align: top; }
+        tr:hover { background-color: #f1f4f9; }
+        
+        .badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .badge-info { background-color: #e1f5fe; color: #0288d1; } /* Asesoría */
+        .badge-warning { background-color: #fff3e0; color: #f57c00; } /* Apoyo Social */
+        .badge-danger { background-color: #ffebee; color: #d32f2f; } /* Maltrato */
+        
+        .btn-download { background-color: #2ecc71; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: bold; display: inline-block; transition: 0.3s; }
+        .btn-download:hover { background-color: #27ae60; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
-<div class="card">
-    <h2>Gestión de Denuncias</h2>
-    <div class="controls">
-        <form action="/admin" method="GET" style="display:flex; flex-grow:1; gap:10px;">
-            <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar por folio o nombre...">
-            <button type="submit" style="padding:10px; cursor:pointer;">🔍</button>
-        </form>
-        <a href="/descargar_excel" class="btn-excel">📊 Reporte Excel</a>
-    </div>
-    <table>
-        <thead>
-            <tr><th>Folio</th><th>Fecha</th><th>Nombre</th><th>Descripción</th><th>Estatus</th></tr>
-        </thead>
-        <tbody>
-            {% for d in denuncias %}
-            <tr>
-                <td><b>{{ d.folio }}</b></td>
-                <td>{{ d.fecha.strftime('%d/%m/%Y') }}</td>
-                <td>{{ d.nombre_denunciante }}</td>
-                <td>{{ d.descripcion[:80] }}...</td>
-                <td>{{ d.estatus }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+<div class="navbar">
+    <strong>DIF Hermosillo - Administración</strong>
+    <a href="/descargar" class="btn-download">📥 Descargar Reporte Excel</a>
 </div>
+
+<div class="container">
+    <div class="card">
+        <h2>Listado de Reportes Recibidos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Folio</th>
+                    <th>Nombre</th>
+                    <th>Trámite</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in denuncias %}
+                <tr>
+                    <td>{{ d.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td><strong>{{ d.folio }}</strong></td>
+                    <td>{{ d.nombre }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if d.tipo_tramite == 'Reporte de Maltrato' %}badge-danger
+                            {% elif d.tipo_tramite == 'Asesoría Jurídica' %}badge-info
+                            {% else %}badge-warning{% endif %}">
+                            {{ d.tipo_tramite }}
+                        </span>
+                    </td>
+                    <td style="max-width: 300px;">{{ d.descripcion }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if not denuncias %}
+        <p style="text-align: center; color: #999; padding: 20px;">No hay reportes registrados todavía.</p>
+        {% endif %}
+    </div>
+</div>
+
 </body>
 </html>
