@@ -2,140 +2,53 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Subprocuraduría - Chat de Denuncias</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        /* Encabezado Institucional */
-        .header {
-            background-color: #004a99;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
-
-        /* Área de Mensajes */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.4;
-        }
-
-        .bot-message {
-            align-self: flex-start;
-            background-color: white;
-            color: #333;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        .user-message {
-            align-self: flex-end;
-            background-color: #dcf8c6;
-            color: #333;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        /* Formulario de Entrada */
-        .input-area {
-            background-color: white;
-            padding: 15px;
-            border-top: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-        }
-
-        input:focus, textarea:focus {
-            border-color: #004a99;
-        }
-
-        .btn-send {
-            background-color: #25d366;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn-send:hover {
-            background-color: #128c7e;
-        }
-
-        .folio-box {
-            background-color: #e3f2fd;
-            border: 1px dashed #2196f3;
-            padding: 10px;
-            text-align: center;
-            border-radius: 8px;
-            margin-top: 5px;
-            font-weight: bold;
-            color: #0d47a1;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+        .header { background-color: #004481; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
+        .chat-container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 20px; height: 70vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .message { margin-bottom: 15px; padding: 12px 18px; border-radius: 20px; max-width: 80%; line-height: 1.5; }
+        .bot-message { background-color: #e9ecef; align-self: flex-start; color: #333; }
+        .user-message { background-color: #dcf8c6; align-self: flex-end; color: #333; }
+        .folio-box { background-color: #fff; border: 2px dashed #004481; padding: 15px; border-radius: 10px; margin-top: 10px; text-align: center; font-weight: bold; color: #004481; }
+        .whatsapp-btn { background-color: #25D366; color: white; padding: 12px 20px; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; font-weight: bold; margin-top: 15px; transition: background 0.3s; }
+        .whatsapp-btn:hover { background-color: #128C7E; }
+        .input-area { max-width: 600px; margin: 10px auto; display: flex; flex-direction: column; gap: 10px; }
+        input, textarea { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; }
+        .btn-send { background-color: #2ecc71; color: white; padding: 15px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; }
+        .btn-send:hover { background-color: #27ae60; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    Subprocuraduría de la Defensa
-</div>
+<div class="header">Subprocuraduría de la Defensa</div>
 
 <div class="chat-container">
-    <!-- Mensaje del Bot -->
-    <div class="message bot-message">
-        Bienvenido. ¿Qué situación desea reportar el día de hoy?
-    </div>
+    <div class="message bot-message">Bienvenido. ¿Qué situación desea reportar el día de hoy?</div>
 
-    <!-- Ejemplo de mensaje enviado (esto se genera con Flask) -->
-    <div class="message user-message">
-        Quiero reportar un problema en mi colonia.
-    </div>
+    {% if mensaje_usuario %}
+    <div class="message user-message">{{ mensaje_usuario }}</div>
+    {% endif %}
 
-    <!-- Ejemplo de respuesta con Folio -->
+    {% if folio %}
     <div class="message bot-message">
-        ¡Recibido! Hemos registrado su reporte.
-        <div class="folio-box">Su folio es: D-2026-3604</div>
+        ¡Recibido! Hemos registrado su reporte con éxito.
+        <div class="folio-box">
+            Su folio es: {{ folio }}
+            <br>
+            <!-- BOTÓN DE WHATSAPP INTEGRADO -->
+            <a href="https://wa.me/526624169524?text=Hola,%20realicé%20un%20reporte%20en%20el%20sistema.%20Mi%20folio%20es:%20{{ folio }}" 
+               target="_blank" class="whatsapp-btn">
+               <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" style="width: 20px; margin-right: 10px;">
+               Enviar folio por WhatsApp
+            </a>
+        </div>
     </div>
+    {% endif %}
 </div>
 
-<form class="input-area">
+<form class="input-area" method="POST" action="/">
     <input type="text" name="nombre" placeholder="Nombre completo" required>
     <textarea name="descripcion" rows="3" placeholder="Describa los hechos aquí..." required></textarea>
     <button type="submit" class="btn-send">Enviar Reporte Seguro</button>
