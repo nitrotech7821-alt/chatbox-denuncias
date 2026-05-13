@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file
 from flask_sqlalchemy import SQLAlchemy
+from flask_httpauth import HTTPBasicAuth
 import pandas as pd
-import io
-import datetime
+from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -10,76 +11,74 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///denuncias.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+auth = HTTPBasicAuth()
 
-# Modelo de la base de datos
+# Usuario y Contraseña para el Panel Admin
+users = {
+    "admin": "santander2024"
+}
+
+@auth.verify_password
+def verify_password(username, password):
+    if username in users and users.get(username) == password:
+        return username
+
+# Modelo de la Base de Datos
 class Denuncia(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     folio = db.Column(db.String(20), unique=True)
-    nombre_denunciante = db.Column(db.String(100))
+    nombre = db.Column(db.String(100))
+    tipo_tramite = db.Column(db.String(50)) # Nueva columna
     descripcion = db.Column(db.Text)
-    fecha = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    fecha = db.Column(db.DateTime, default=datetime.now)
 
-# Crear la base de datos al iniciar
+# Crear la base de datos
 with app.app_context():
     db.create_all()
 
-# --- RUTA PARA EL CIUDADANO (CHATBOT) ---
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    confirmacion = None
+    folio = None
+    mensaje_usuario = None
     if request.method == 'POST':
         nombre = request.form.get('nombre')
+        tipo = request.form.get('tipo_tramite')
         descripcion = request.form.get('descripcion')
         
-        # Generar Folio automático (Ej: D-2026-3605)
-        conteo = Denuncia.query.count()
-        folio_nuevo = f"D-{datetime.datetime.now().year}-{3600 + conteo + 1}"
+        # Generar Folio
+        nuevo_folio = f"D-{datetime.now().year}-{1000 + len(Denuncia.query.all()) + 1}"
         
-        nueva_denuncia = Denuncia(
-            folio=folio_nuevo,
-            nombre_denunciante=nombre,
-            descripcion=descripcion
-        )
+        nueva_denuncia = Denuncia(folio=nuevo_folio, nombre=nombre, tipo_tramite=tipo, descripcion=descripcion)
         db.session.add(nueva_denuncia)
         db.session.commit()
         
-        confirmacion = folio_nuevo
-        
-    return render_template('index.html', folio=confirmacion)
+        folio = nuevo_folio
+        mensaje_usuario = f"Trámite: {tipo} - Enviado por {nombre}"
 
-# --- PANEL DE ADMINISTRACIÓN ---
+    return render_template('index.html', folio=folio, mensaje_usuario=mensaje_usuario)
+
 @app.route('/admin')
-def admin_panel():
-    auth = request.authorization
-    # Credenciales que tenías en tu imagen
-    if not auth or not (auth.username == 'admin' and auth.password == 'Santander2026'):
-        return Response('Acceso denegado.', 401, {'WWW-Authenticate': 'Basic realm="Login"'})
-    
-    # Ordenar por fecha más reciente
+@auth.login_required
+def admin():
     denuncias = Denuncia.query.order_by(Denuncia.fecha.desc()).all()
     return render_template('admin.html', denuncias=denuncias)
 
-# --- DESCARGAR EXCEL ---
-@app.route('/descargar_excel')
+@app.route('/descargar')
+@auth.login_required
 def descargar_excel():
     denuncias = Denuncia.query.all()
-    datos = []
-    for d in denuncias:
-        datos.append({
-            "Folio": d.folio,
-            "Fecha": d.fecha.strftime("%Y-%m-%d %H:%M"),
-            "Nombre": d.nombre_denunciante,
-            "Mensaje": d.descripcion
-        })
+    data = [{
+        'Folio': d.folio,
+        'Fecha': d.fecha.strftime('%Y-%m-%d %H:%M'),
+        'Nombre': d.nombre,
+        'Tipo de Trámite': d.tipo_tramite,
+        'Descripción': d.descripcion
+    } for d in denuncias]
     
-    df = pd.DataFrame(datos)
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False)
-    
-    output.seek(0)
-    return send_file(output, download_name="reporte_denuncias.xlsx", as_attachment=True)
+    df = pd.DataFrame(data)
+    file_path = 'reporte_denuncias.xlsx'
+    df.to_excel(file_path, index=False)
+    return send_file(file_path, as_attachment=True)
 
 if __name__ == '__main__':
-    # host='0.0.0.0' es vital para que se vea desde el celular
-    app.run(host='0.0.0.0', port=8080, debug=False)
+    app.run(debug=True)
