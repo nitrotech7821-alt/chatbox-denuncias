@@ -1,0 +1,9 @@
+services:
+  subprocuraduria-app:
+    build: .
+    container_name: subprocuraduria_container
+    ports:
+      - "8080:5000"
+    volumes:
+      - ./instance:/app/instance
+    restart: always
